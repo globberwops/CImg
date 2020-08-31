@@ -2,7 +2,6 @@
 
 if(NOT TARGET CImg::CImg AND NOT CImg_BINARY_DIR)
 
-  set_and_check(CImg_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
   include("${CMAKE_CURRENT_LIST_DIR}/CImgTargets.cmake")
 
   include(CMakeFindDependencyMacro)
@@ -89,6 +88,13 @@ if(NOT TARGET CImg::CImg AND NOT CImg_BINARY_DIR)
   if(CImg_USE_OpenMP AND OpenMP_FOUND)
     target_link_libraries(CImg::CImg INTERFACE OpenMP::OpenMP_CXX)
     target_compile_definitions(CImg::CImg INTERFACE cimg_use_openmp)
+    if(CImg_USE_FFTW3 AND FFTW3_FOUND)
+      find_library(
+        FFTW3_OMP
+        NAMES fftw3_omp
+        HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
+      target_link_libraries(CImg::CImg INTERFACE ${FFTW3_OMP})
+    endif()
   endif()
 
   option(CImg_USE_PNG "Use the PNG library" ON)
@@ -101,9 +107,16 @@ if(NOT TARGET CImg::CImg AND NOT CImg_BINARY_DIR)
   option(CImg_USE_PThread "Use the POSIX threads library" ON)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_dependency(Threads)
-  if(CImg_USE_PTHREAD AND Threads_FOUND)
+  if(CImg_USE_PThread AND Threads_FOUND)
     target_link_libraries(CImg::CImg INTERFACE Threads::Threads)
     target_compile_definitions(CImg::CImg INTERFACE cimg_use_pthread)
+    if(CImg_USE_FFTW3 AND FFTW3_FOUND)
+      find_library(
+        FFTW3_THREADS
+        NAMES fftw3_threads
+        HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
+      target_link_libraries(CImg::CImg INTERFACE ${FFTW3_THREADS})
+    endif()
   endif()
 
   option(CImg_USE_TIFF "Use the TIFF library" ON)
