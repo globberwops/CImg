@@ -47,9 +47,13 @@ configure_package_config_file(
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CImg
   NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CImgConfig.cmake
-              ${CMAKE_CURRENT_BINARY_DIR}/CImgConfigVersion.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CImg)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/CImgConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/CImgConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/CImgMacros.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CImg)
+
+configure_file(CImgMacros.cmake CImgMacros.cmake COPYONLY)
 
 export(
   TARGETS CImg
