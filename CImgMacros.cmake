@@ -1,149 +1,210 @@
 include_guard(GLOBAL)
 
 function(SETUP_TARGET_FOR_CIMG)
+  cmake_parse_arguments(
+    PARSE_ARGV 1 SETUP_TARGET_FOR_CIMG
+    "LINK_PUBLIC;LINK_PRIVATE;FIND_QUIET;REQUIRE_COMPONENTS" "" "COMPONENTS")
+
+  if(SETUP_TARGET_FOR_CIMG_LINK_PRIVATE)
+    set(_cimg_link PRIVATE)
+  else()
+    set(_cimg_link PUBLIC)
+  endif()
+
+  if(SETUP_TARGET_FOR_CIMG_FIND_QUIET)
+    set(_cimg_quiet QUIET)
+  endif()
+
+  if(SETUP_TARGET_FOR_CIMG_REQUIRE_COMPONENTS)
+    set(_cimg_required REQUIRED)
+  endif()
+
   if(NOT TARGET "${ARGV0}")
     message(FATAL_ERROR "\"${ARGV0}\" is not a valid target. Aborting...")
   else()
     set(_cimg_target "${ARGV0}")
   endif()
 
-  option(CImg_USE_CURL "Use the CURL library" ON)
-  find_package(CURL)
-  if(CImg_USE_CURL AND CURL_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC CURL::libcurl)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_curl)
+  if(NOT TARGET CImg::CImg)
+    message(FATAL_ERROR "\"CImg::CImg\" is not a valid target. Aborting...")
+  else()
+    target_link_libraries(${_cimg_target} ${_cimg_link} CImg::CImg)
   endif()
 
-  option(CImg_USE_FFMPEG "Use the FFMPEG libraries" ON)
-  find_package(PkgConfig QUIET)
-  if(PKG_CONFIG_FOUND)
-    pkg_check_modules(LIBAVCODEC IMPORTED_TARGET GLOBAL libavcodec)
-    pkg_check_modules(LIBAVFORMAT IMPORTED_TARGET GLOBAL libavformat)
-    pkg_check_modules(LIBAVUTIL IMPORTED_TARGET GLOBAL libavutil)
-    pkg_check_modules(LIBSWSCALE IMPORTED_TARGET GLOBAL libswscale)
-    if(CImg_USE_FFMPEG
-       AND LIBAVCODEC_FOUND
-       AND LIBAVFORMAT_FOUND
-       AND LIBAVUTIL_FOUND
-       AND LIBSWSCALE_FOUND)
-      target_link_libraries(
-        ${_cimg_target} PUBLIC PkgConfig::LIBAVCODEC PkgConfig::LIBAVFORMAT
-                               PkgConfig::LIBAVUTIL PkgConfig::LIBSWSCALE)
-      target_compile_definitions(${_cimg_target} PUBLIC cimg_use_ffmpeg)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "CURL" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(CURL ${_cimg_quiet} ${_cimg_required})
+    if(CURL_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} CURL::libcurl)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_curl)
     endif()
   endif()
 
-  option(CImg_USE_FFTW3 "Use the FFTW3 library" ON)
-  find_package(PkgConfig QUIET)
-  if(PKG_CONFIG_FOUND)
-    pkg_check_modules(FFTW3 IMPORTED_TARGET GLOBAL fftw3)
-    if(CImg_USE_FFTW3 AND FFTW3_FOUND)
-      target_link_libraries(${_cimg_target} PUBLIC PkgConfig::FFTW3)
-      target_compile_definitions(${_cimg_target} PUBLIC cimg_use_fftw3)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "FFMPEG" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(PkgConfig QUIET ${_cimg_required})
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(LIBAVCODEC ${_cimg_quiet} ${_cimg_required}
+                        IMPORTED_TARGET GLOBAL libavcodec)
+      pkg_check_modules(LIBAVFORMAT ${_cimg_quiet} ${_cimg_required}
+                        IMPORTED_TARGET GLOBAL libavformat)
+      pkg_check_modules(LIBAVUTIL ${_cimg_quiet} ${_cimg_required}
+                        IMPORTED_TARGET GLOBAL libavutil)
+      pkg_check_modules(LIBSWSCALE ${_cimg_quiet} ${_cimg_required}
+                        IMPORTED_TARGET GLOBAL libswscale)
+      if(LIBAVCODEC_FOUND
+         AND LIBAVFORMAT_FOUND
+         AND LIBAVUTIL_FOUND
+         AND LIBSWSCALE_FOUND)
+        target_link_libraries(
+          ${_cimg_target} ${_cimg_link} PkgConfig::LIBAVCODEC
+          PkgConfig::LIBAVFORMAT PkgConfig::LIBAVUTIL PkgConfig::LIBSWSCALE)
+        target_compile_definitions(${_cimg_target} ${_cimg_link}
+                                                   cimg_use_ffmpeg)
+      endif()
     endif()
   endif()
 
-  option(CImg_USE_JPEG "Use the JPEG library" ON)
-  find_package(JPEG)
-  if(CImg_USE_JPEG AND JPEG_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC JPEG::JPEG)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_jpeg)
-  endif()
-
-  option(CImg_USE_LAPACK "Use the LAPACK library" ON)
-  find_package(LAPACK)
-  if(CImg_USE_LAPACK AND LAPACK_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC LAPACK::LAPACK)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_lapack)
-  endif()
-
-  option(CImg_USE_Magick "Use the Magick++ library" ON)
-  find_package(PkgConfig QUIET)
-  if(PKG_CONFIG_FOUND)
-    pkg_check_modules(MAGICK IMPORTED_TARGET GLOBAL Magick++)
-    if(CImg_USE_Magick AND MAGICK_FOUND)
-      target_link_libraries(${_cimg_target} PUBLIC PkgConfig::MAGICK)
-      target_compile_definitions(${_cimg_target} PUBLIC cimg_use_magick)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "FFTW3" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(PkgConfig QUIET ${_cimg_required})
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(FFTW3 ${_cimg_quiet} ${_cimg_required} IMPORTED_TARGET
+                        GLOBAL fftw3)
+      if(FFTW3_FOUND)
+        target_link_libraries(${_cimg_target} ${_cimg_link} PkgConfig::FFTW3)
+        target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_fftw3)
+      endif()
     endif()
   endif()
 
-  option(CImg_USE_OpenCV "Use the OpenCV library" ON)
-  find_package(OpenCV)
-  if(CImg_USE_OpenCV AND OpenCV_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC ${OpenCV_LIBS})
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_opencv)
-  endif()
-
-  option(CImg_USE_OpenEXR "Use the OpenEXR library" ON)
-  find_package(PkgConfig QUIET)
-  if(PKG_CONFIG_FOUND)
-    pkg_check_modules(OPENEXR IMPORTED_TARGET GLOBAL OpenEXR)
-    if(CImg_USE_OpenEXR AND OPENEXR_FOUND)
-      target_link_libraries(${_cimg_target} PUBLIC PkgConfig::OPENEXR)
-      target_compile_definitions(${_cimg_target} PUBLIC cimg_use_openexr)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "JPEG" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(JPEG ${_cimg_quiet} ${_cimg_required})
+    if(JPEG_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} JPEG::JPEG)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_jpeg)
     endif()
   endif()
 
-  option(CImg_USE_OpenMP "Use the OpenMP library" ON)
-  find_package(OpenMP)
-  if(CImg_USE_OpenMP AND OpenMP_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_openmp)
-    if(CImg_USE_FFTW3 AND FFTW3_FOUND)
-      find_library(
-        FFTW3_OMP
-        NAMES fftw3_omp
-        HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
-      target_link_libraries(${_cimg_target} PUBLIC ${FFTW3_OMP})
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "LAPACK" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(LAPACK ${_cimg_quiet} ${_cimg_required})
+    if(LAPACK_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} LAPACK::LAPACK)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_lapack)
     endif()
   endif()
 
-  option(CImg_USE_PNG "Use the PNG library" ON)
-  find_package(PNG)
-  if(CImg_USE_PNG AND PNG_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC PNG::PNG)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_png)
-  endif()
-
-  option(CImg_USE_PThread "Use the POSIX threads library" ON)
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-  find_package(Threads)
-  if(CImg_USE_PThread AND Threads_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC Threads::Threads)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_pthread)
-    if(CImg_USE_FFTW3 AND FFTW3_FOUND)
-      find_library(
-        FFTW3_THREADS
-        NAMES fftw3_threads
-        HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
-      target_link_libraries(${_cimg_target} PUBLIC ${FFTW3_THREADS})
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "Magick++" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(PkgConfig QUIET ${_cimg_required})
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(MAGICK ${_cimg_quiet} ${_cimg_required} IMPORTED_TARGET
+                        GLOBAL Magick++)
+      if(MAGICK_FOUND)
+        target_link_libraries(${_cimg_target} ${_cimg_link} PkgConfig::MAGICK)
+        target_compile_definitions(${_cimg_target} ${_cimg_link}
+                                                   cimg_use_magick)
+      endif()
     endif()
   endif()
 
-  option(CImg_USE_TIFF "Use the TIFF library" ON)
-  find_package(TIFF)
-  if(CImg_USE_TIFF AND TIFF_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC TIFF::TIFF)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_tiff)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "OpenCV" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(OpenCV ${_cimg_quiet} ${_cimg_required})
+    if(OpenCV_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} ${OpenCV_LIBS})
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_opencv)
+    endif()
   endif()
 
-  option(CImg_USE_X11 "Use the X11 libraries" ON)
-  find_package(X11)
-  if(CImg_USE_X11
-     AND X11_FOUND
-     AND X11_XShm_FOUND
-     AND X11_Xrandr_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC X11::X11 X11::Xrandr)
-    target_include_directories(${_cimg_target} PUBLIC ${X11_XShm_INCLUDE_PATH})
-    target_compile_definitions(
-      ${_cimg_target} PUBLIC cimg_display=1 cimg_use_xshm cimg_use_xrandr)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "OpenEXR" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(PkgConfig QUIET ${_cimg_required})
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(OPENEXR ${_cimg_quiet} ${_cimg_required}
+                        IMPORTED_TARGET GLOBAL OpenEXR)
+      if(OPENEXR_FOUND)
+        target_link_libraries(${_cimg_target} ${_cimg_link} PkgConfig::OPENEXR)
+        target_compile_definitions(${_cimg_target} ${_cimg_link}
+                                                   cimg_use_openexr)
+      endif()
+    endif()
   endif()
 
-  option(CImg_USE_ZLIB "Use the ZLIB library" ON)
-  find_package(ZLIB)
-  if(CImg_USE_ZLIB AND ZLIB_FOUND)
-    target_link_libraries(${_cimg_target} PUBLIC ZLIB::ZLIB)
-    target_compile_definitions(${_cimg_target} PUBLIC cimg_use_zlib)
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "OpenMP" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(OpenMP ${_cimg_quiet} ${_cimg_required})
+    if(OpenMP_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} OpenMP::OpenMP_CXX)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_openmp)
+      if(FFTW3_FOUND)
+        find_library(
+          FFTW3_OMP
+          NAMES fftw3_omp
+          HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
+        target_link_libraries(${_cimg_target} ${_cimg_link} ${FFTW3_OMP})
+      endif()
+    endif()
+  endif()
+
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "PNG" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(PNG ${_cimg_quiet} ${_cimg_required})
+    if(PNG_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} PNG::PNG)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_png)
+    endif()
+  endif()
+
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "Threads" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads ${_cimg_quiet} ${_cimg_required})
+    if(Threads_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} Threads::Threads)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_pthread)
+      if(FFTW3_FOUND)
+        find_library(
+          FFTW3_THREADS
+          NAMES fftw3_threads
+          HINTS ${FFTW3_LIBRARY_DIRS} REQUIRED)
+        target_link_libraries(${_cimg_target} ${_cimg_link} ${FFTW3_THREADS})
+      endif()
+    endif()
+  endif()
+
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "TIFF" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(TIFF ${_cimg_quiet} ${_cimg_required})
+    if(TIFF_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} TIFF::TIFF)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_tiff)
+    endif()
+  endif()
+
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "X11" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(X11 ${_cimg_quiet} ${_cimg_required})
+    if(X11_FOUND
+       AND X11_XShm_FOUND
+       AND X11_Xrandr_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} X11::X11 X11::Xrandr)
+      target_include_directories(${_cimg_target} ${_cimg_link}
+                                 ${X11_XShm_INCLUDE_PATH})
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_display=1
+                                                 cimg_use_xshm cimg_use_xrandr)
+    endif()
+  endif()
+
+  if(NOT SETUP_TARGET_FOR_CIMG_COMPONENTS OR "ZLIB" IN_LIST
+                                             SETUP_TARGET_FOR_CIMG_COMPONENTS)
+    find_package(ZLIB ${_cimg_quiet} ${_cimg_required})
+    if(ZLIB_FOUND)
+      target_link_libraries(${_cimg_target} ${_cimg_link} ZLIB::ZLIB)
+      target_compile_definitions(${_cimg_target} ${_cimg_link} cimg_use_zlib)
+    endif()
   endif()
 
 endfunction()
