@@ -1,3 +1,47 @@
+#[========================================[.rst:
+CImgMacros
+----------
+
+A ``CImg`` module for CMake.
+
+Adds the :command:`setup_target_for_cimg`,
+and provides options the following options:
+
+``LINK_PUBLIC``
+  link components publicly
+``LINK_PRIVATE``
+  link components privately
+``FIND_QUIET``
+  find components quietly
+``REQUIRE_COMPONENTS``
+  require components to be found
+``COMPONENTS``
+  the components to be used
+
+.. code-block:: cmake
+   setup_target_for_cimg(
+     <target>
+     [LINK_PUBLIC|LINK_PRIVATE]
+     [FIND_QUIET]
+     [REQUIRE_COMPONENTS]
+     [COMPONENTS
+       [CURL]
+       [FFMPEG]
+       [FFTW3]
+       [JPEG]
+       [LAPACK]
+       [Magick++]
+       [OpenCV]
+       [OpenEXR]
+       [OpenMP]
+       [PNG]
+       [Threads]
+       [TIFF]
+       [X11]
+       [ZLIB]])
+
+#]========================================]
+
 include_guard(GLOBAL)
 
 function(SETUP_TARGET_FOR_CIMG)
